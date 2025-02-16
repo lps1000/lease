@@ -225,8 +225,8 @@ export function AddLeaserijderDialog({
               required
             />
           </div>
-          <div className="grid grid-cols-5 gap-3">
-            <div className="col-span-4">
+          <div className="grid grid-cols-10 gap-3">
+            <div className="col-span-8">
               <Label htmlFor="street" className="flex items-center gap-1">
                 Straatnaam
                 <span className="text-red-500">*</span>
@@ -238,7 +238,7 @@ export function AddLeaserijderDialog({
                 required
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-2">
               <Label htmlFor="house_nr" className="flex items-center gap-1">
                 Huisnummer
                 <span className="text-red-500">*</span>

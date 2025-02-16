@@ -34,7 +34,8 @@
     "react-dom": "19.0.0",
     "react-hook-form": "^7.54.2",
     "shadcn": "^2.3.0",
-    "shadcn-ui": "^0.9.4"
+    "shadcn-ui": "^0.9.4",
+    "sonner": "^1.7.4"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

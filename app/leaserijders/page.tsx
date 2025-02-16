@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation"
 import { MaintenanceDialog } from "@/app/components/maintenance-dialog"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { NoteDialog } from "@/components/note-dialog"
+import { AddLeaserijderDialog } from "@/app/components/add-leaserijder-dialog"
 
 export default function LeaserijdersPage() {
   const { toast } = useToast()
@@ -64,16 +65,6 @@ export default function LeaserijdersPage() {
     note: ""
   })
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [newRijder, setNewRijder] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    street: "",
-    postalCode: "",
-    city: "",
-    birthDate: "",
-    invoiceNumber: "",
-  })
   const router = useRouter()
   const [maintenanceOpen, setMaintenanceOpen] = useState(false)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("")
@@ -84,7 +75,7 @@ export default function LeaserijdersPage() {
       const supabase = createClientComponentClient();
       const { data: customers, error } = await supabase
         .from('customers')
-        .select('id, name, surname, email, telephone, zipcode, street')
+        .select('id, name, surname, email, telephone, zipcode, street, client_since')
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
 
       if (error) {
@@ -120,7 +111,7 @@ export default function LeaserijdersPage() {
           street: customer.street,
           place: '', // Add missing required fields
           date_of_birth: null,
-          client_since: null,
+          client_since: customer.client_since,
           teamleader_id: null,
           house_nr: ''
         }));
@@ -155,67 +146,6 @@ export default function LeaserijdersPage() {
       console.error('Fout bij opslaan notitie:', error)
     }
   }
-
-  const handleAddRijder = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData();
-      
-      // Voeg alle velden toe aan de FormData
-      formData.append('name', newRijder.name);
-      formData.append('email', newRijder.email);
-      formData.append('phone', newRijder.phone);
-      formData.append('street', newRijder.street);
-      formData.append('postalCode', newRijder.postalCode);
-      formData.append('city', newRijder.city);
-      formData.append('birthDate', newRijder.birthDate);
-      formData.append('invoiceNumber', newRijder.invoiceNumber);
-
-      const response = await fetch('/api/rijders', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Fout",
-          description: data.error,
-        });
-        return;
-      }
-
-      toast({
-        title: "Succes",
-        description: data.message,
-        className: "bg-green-500 text-white",
-      });
-      
-      // Reset form en sluit dialog
-      setShowAddDialog(false);
-      setNewRijder({
-        name: "",
-        phone: "",
-        email: "",
-        street: "",
-        postalCode: "",
-        city: "",
-        birthDate: "",
-        invoiceNumber: "",
-      });
-      
-      // Refresh de data
-      router.refresh();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Fout",
-        description: "Er is iets misgegaan bij het toevoegen van de rijder",
-      });
-    }
-  };
 
   const handleMaintenanceClick = (customerId: string) => {
     setSelectedCustomerId(customerId)
@@ -278,81 +208,35 @@ export default function LeaserijdersPage() {
             </div>
           </div>
 
-          {/* Add Dialog */}
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nieuwe Leaserijder Toevoegen</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Naam</Label>
-                  <Input
-                    id="name"
-                    value={newRijder.name}
-                    onChange={(e) => setNewRijder({ ...newRijder, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Telefoonnummer</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={newRijder.phone}
-                    onChange={(e) => setNewRijder({ ...newRijder, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">E-mailadres</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newRijder.email}
-                    onChange={(e) => setNewRijder({ ...newRijder, email: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="street">Straatnaam + huisnummer</Label>
-                  <Input
-                    id="street"
-                    value={newRijder.street}
-                    onChange={(e) => setNewRijder({ ...newRijder, street: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="postalCode">Postcode</Label>
-                  <Input
-                    id="postalCode"
-                    value={newRijder.postalCode}
-                    onChange={(e) => setNewRijder({ ...newRijder, postalCode: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="city">Woonplaats</Label>
-                  <Input
-                    id="city"
-                    value={newRijder.city}
-                    onChange={(e) => setNewRijder({ ...newRijder, city: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="birthDate">Geboortedatum</Label>
-                  <Input
-                    id="birthDate"
-                    type="date"
-                    value={newRijder.birthDate}
-                    onChange={(e) => setNewRijder({ ...newRijder, birthDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Annuleren
-                </Button>
-                <Button onClick={handleAddRijder}>Toevoegen</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <AddLeaserijderDialog 
+            open={showAddDialog} 
+            onOpenChange={setShowAddDialog}
+            onSuccess={() => {
+              // Refresh the data after successful addition
+              getData().then(data => {
+                const typedData = data.map(customer => ({
+                  id: customer.id,
+                  name: customer.name,
+                  surname: customer.surname,
+                  email: customer.email,
+                  telephone: customer.telephone,
+                  zipcode: customer.zipcode,
+                  street: customer.street,
+                  place: '',
+                  date_of_birth: null,
+                  client_since: null,
+                  teamleader_id: null,
+                  house_nr: ''
+                }));
+                setCustomers(typedData.map(customer => ({
+                  ...customer,
+                  date_of_birth: customer.date_of_birth || '',
+                  client_since: customer.client_since || '',
+                  teamleader_id: customer.teamleader_id || ''
+                })));
+              });
+            }}
+          />
 
           <div className="max-w-full space-y-8 p-8">
             {/* Top pagination controls */}
@@ -406,7 +290,14 @@ export default function LeaserijdersPage() {
                       <TableCell>{customer.telephone}</TableCell>
                       <TableCell>{customer.zipcode}</TableCell>
                       <TableCell>
-                        {customer.client_since ? new Date(customer.client_since).toLocaleDateString('nl-NL') : '-'}
+                        {customer.client_since 
+                          ? new Date(customer.client_since).toLocaleDateString('nl-NL', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })
+                          : '-'
+                        }
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
