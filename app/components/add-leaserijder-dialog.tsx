@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
 import { format } from 'date-fns'
 import { nl } from 'date-fns/locale'
+import { DayPicker } from "react-day-picker"
+import "react-day-picker/dist/style.css"
 
 interface AddLeaserijderDialogProps {
   open: boolean
@@ -306,14 +308,20 @@ export function AddLeaserijderDialog({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
+                <DayPicker
                   mode="single"
                   selected={birthDate}
                   onSelect={setBirthDate}
                   disabled={(date) =>
                     date > new Date() || date < new Date("1900-01-01")
                   }
-                  required
+                  locale={nl}
+                  showOutsideDays
+                  className="p-3"
+                  modifiersClassNames={{
+                    selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                    today: "bg-accent text-accent-foreground",
+                  }}
                 />
               </PopoverContent>
             </Popover>
