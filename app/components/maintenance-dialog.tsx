@@ -29,15 +29,21 @@ interface MaintenanceDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   customerId: string
+  onMaintenanceSaved: () => Promise<void>
 }
 
 export function MaintenanceDialog({
   open,
   onOpenChange,
   customerId,
+  onMaintenanceSaved,
 }: MaintenanceDialogProps) {
-  const [maintenanceDate, setMaintenanceDate] = useState<Date>()
-  const [nextMaintenanceDate, setNextMaintenanceDate] = useState<Date>()
+  const [maintenanceDate, setMaintenanceDate] = useState<Date>(new Date())
+  const [nextMaintenanceDate, setNextMaintenanceDate] = useState<Date>(() => {
+    const nextDate = new Date()
+    nextDate.setFullYear(nextDate.getFullYear() + 1)
+    return nextDate
+  })
   const [maintenanceDateOpen, setMaintenanceDateOpen] = useState(false)
   const [nextMaintenanceDateOpen, setNextMaintenanceDateOpen] = useState(false)
   const [notes, setNotes] = useState('')
@@ -59,9 +65,9 @@ export function MaintenanceDialog({
   }
 
   const handleMaintenanceDateChange = (date: Date | undefined) => {
-    setMaintenanceDate(date)
-    setMaintenanceDateOpen(false)
     if (date) {
+      setMaintenanceDate(date)
+      setMaintenanceDateOpen(false)
       const nextDate = new Date(date)
       nextDate.setFullYear(nextDate.getFullYear() + 1)
       setNextMaintenanceDate(nextDate)
@@ -69,8 +75,10 @@ export function MaintenanceDialog({
   }
 
   const handleNextMaintenanceDateChange = (date: Date | undefined) => {
-    setNextMaintenanceDate(date)
-    setNextMaintenanceDateOpen(false)
+    if (date) {
+      setNextMaintenanceDate(date)
+      setNextMaintenanceDateOpen(false)
+    }
   }
 
   const handleFileDrop = useCallback((acceptedFiles: File[]) => {
@@ -108,6 +116,16 @@ export function MaintenanceDialog({
       return
     }
 
+    // Ensure we have valid dates before proceeding
+    if (!maintenanceDate || !nextMaintenanceDate) {
+      toast({
+        variant: "destructive",
+        title: "Fout",
+        description: "Datums zijn verplicht",
+      })
+      return
+    }
+
     try {
       setIsSaving(true)
       let invoice_url = undefined
@@ -120,41 +138,64 @@ export function MaintenanceDialog({
           .from('maintenance-invoices')
           .upload(fileName, file)
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          throw new Error(`Fout bij uploaden: ${uploadError.message}`)
+        }
         if (data) invoice_url = data.path
       }
 
       const maintenanceRecord: Maintenance = {
         customer_id: parseInt(customerId),
-        maintenance_date: maintenanceDate ? maintenanceDate.toISOString() : new Date().toISOString(),
-        next_maintenance_date: nextMaintenanceDate ? nextMaintenanceDate.toISOString() : new Date().toISOString(),
-        notes,
+        maintenance_date: maintenanceDate.toISOString(),
+        next_maintenance_date: nextMaintenanceDate.toISOString(),
+        notes: notes || '',
         invoice_url,
-        invoice_number: invoiceNumber,
+        invoice_number: invoiceNumber.trim()
       }
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('maintenance')
         .insert(maintenanceRecord)
 
-      if (error) throw error
+      if (insertError) {
+        throw new Error(`Database fout: ${insertError.message}`)
+      }
 
       toast({
         title: "Success",
         description: "Onderhoudsgegevens zijn opgeslagen",
       })
+      
+      // Reset form
       onOpenChange(false)
-      setMaintenanceDate(undefined)
-      setNextMaintenanceDate(undefined)
+      setMaintenanceDate(new Date())
+      setNextMaintenanceDate(() => {
+        const nextDate = new Date()
+        nextDate.setFullYear(nextDate.getFullYear() + 1)
+        return nextDate
+      })
       setNotes('')
       setFile(null)
       setInvoiceNumber('')
+      
+      // Safely call onMaintenanceSaved if it exists
+      if (typeof onMaintenanceSaved === 'function') {
+        await onMaintenanceSaved()
+      }
     } catch (error) {
-      console.error('Error saving maintenance:', error)
+      console.error('Error in handleSave:', error)
+      
+      let errorMessage = 'Er is een onverwachte fout opgetreden'
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
       toast({
         variant: "destructive",
         title: "Fout",
-        description: "Kon de onderhoudsgegevens niet opslaan",
+        description: errorMessage,
       })
     } finally {
       setIsSaving(false)
@@ -268,7 +309,7 @@ export function MaintenanceDialog({
               id="maintenance-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Schrijf hier je opmerkingen..."
+              placeholder="Welke werkzaamheden zijn er uitgevoerd?"
               className="min-h-[100px]"
             />
           </div>
@@ -332,8 +373,12 @@ export function MaintenanceDialog({
               variant="outline"
               onClick={() => {
                 onOpenChange(false)
-                setMaintenanceDate(undefined)
-                setNextMaintenanceDate(undefined)
+                setMaintenanceDate(new Date())
+                setNextMaintenanceDate(() => {
+                  const nextDate = new Date()
+                  nextDate.setFullYear(nextDate.getFullYear() + 1)
+                  return nextDate
+                })
                 setNotes('')
                 setFile(null)
                 setInvoiceNumber('')

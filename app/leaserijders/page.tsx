@@ -68,6 +68,7 @@ export default function LeaserijdersPage() {
   const router = useRouter()
   const [maintenanceOpen, setMaintenanceOpen] = useState(false)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("")
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false)
 
   const getData = async () => {
     try {
@@ -150,6 +151,29 @@ export default function LeaserijdersPage() {
   const handleMaintenanceClick = (customerId: string) => {
     setSelectedCustomerId(customerId)
     setMaintenanceOpen(true)
+  }
+
+  const handleMaintenanceSaved = async () => {
+    // Refresh data after maintenance is saved
+    const data = await getData()
+    // ... rest of your data processing code ...
+  }
+
+  const handleNoteClick = (customerId: string, customerName: string) => {
+    setNoteFormData({
+      rijderId: parseInt(customerId),
+      rijderName: customerName,
+      note: ""
+    })
+    setNoteDialogOpen(true)
+  }
+
+  const handleNoteSaved = async () => {
+    setNoteDialogOpen(false)
+    toast({
+      title: "Notitie opgeslagen",
+      description: "De notitie is succesvol opgeslagen.",
+    })
   }
 
   if (isLoading) {
@@ -310,10 +334,19 @@ export default function LeaserijdersPage() {
                             <Wrench className="h-4 w-4" />
                             Onderhoud
                           </Button>
-                          <NoteDialog 
-                            rijderId={customer.id}
-                            rijderName={`${customer.name} ${customer.surname}`}
-                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              handleNoteClick(
+                                customer.id.toString(), 
+                                `${customer.name} ${customer.surname}`
+                              )
+                            }}
+                          >
+                            <StickyNote className="h-4 w-4" />
+                            Notitie
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -335,6 +368,14 @@ export default function LeaserijdersPage() {
         open={maintenanceOpen}
         onOpenChange={setMaintenanceOpen}
         customerId={selectedCustomerId}
+        onMaintenanceSaved={handleMaintenanceSaved}
+      />
+      <NoteDialog 
+        open={noteDialogOpen}
+        onOpenChange={setNoteDialogOpen}
+        customerId={noteFormData.rijderId.toString()}
+        customerName={noteFormData.rijderName}
+        onNoteSaved={handleNoteSaved}
       />
     </div>
   )

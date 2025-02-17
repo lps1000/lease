@@ -13,16 +13,24 @@ import { Input } from "@/components/ui/input"
 import { StickyNote } from "lucide-react"
 import { useState } from "react"
 import { createClient } from '@/utils/supabase/client'
-import { toast } from "sonner"
+import { toast } from "@/components/hooks/use-toast"
 
 interface NoteDialogProps {
-  rijderId: number
-  rijderName: string
+  customerId: string;
+  customerName: string;
+  onNoteSaved: () => Promise<void>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function NoteDialog({ rijderId, rijderName }: NoteDialogProps) {
+export function NoteDialog({ 
+  customerId, 
+  customerName,
+  onNoteSaved, 
+  open, 
+  onOpenChange 
+}: NoteDialogProps) {
   const [note, setNote] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
   const currentDateTime = new Date().toLocaleString('nl-NL', {
@@ -32,7 +40,10 @@ export function NoteDialog({ rijderId, rijderName }: NoteDialogProps) {
 
   const handleSubmit = async () => {
     if (!note.trim()) {
-      toast.error("Voer eerst een notitie in")
+      toast({
+        variant: "destructive",
+        title: "Voer eerst een notitie in"
+      })
       return
     }
 
@@ -42,7 +53,7 @@ export function NoteDialog({ rijderId, rijderName }: NoteDialogProps) {
         .from('notes')
         .insert({
           description: note.trim(),
-          customer_id: rijderId,
+          customer_id: customerId,
           created_at: new Date().toISOString()
         })
         .select()
@@ -52,43 +63,32 @@ export function NoteDialog({ rijderId, rijderName }: NoteDialogProps) {
         throw new Error(error.message)
       }
 
-      toast.success("Notitie is opgeslagen")
-      setIsOpen(false)
+      toast({
+        title: "Notitie is opgeslagen"
+      })
+      onOpenChange(false)
       setNote("")
+      await onNoteSaved()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout'
       console.error('Fout bij opslaan notitie:', errorMessage)
-      toast.error(`Er is iets misgegaan bij het opslaan van de notitie: ${errorMessage}`)
+      toast({
+        variant: "destructive",
+        title: "Er is iets misgegaan",
+        description: `Fout bij het opslaan van de notitie: ${errorMessage}`
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex items-center gap-1"
-        >
-          <StickyNote className="h-4 w-4" />
-          Notitie
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Notitie voor {rijderName}</DialogTitle>
+          <DialogTitle>Notitie voor {customerName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Leaserijder</label>
-            <Input 
-              value={rijderName}
-              readOnly
-              className="bg-muted"
-            />
-          </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Datum en tijd</label>
             <Input 
@@ -107,7 +107,7 @@ export function NoteDialog({ rijderId, rijderName }: NoteDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Annuleren
             </Button>
             <Button 

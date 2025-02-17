@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import { Sidebar } from "@/components/sidebar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // Type definitie voor een notitie
 type Note = {
@@ -13,6 +15,11 @@ type Note = {
   created_at: string
   updated_at: string
   user_email: string
+  customer_id: string
+  customers: {
+    name: string
+    surname: string
+  }
 }
 
 export default function NotitiesPage() {
@@ -20,6 +27,7 @@ export default function NotitiesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const getData = async () => {
@@ -27,10 +35,17 @@ export default function NotitiesPage() {
         setIsLoading(true)
         const { data, error } = await supabase
           .from('notes')
-          .select('*')
+          .select(`
+            *,
+            customers (
+              name,
+              surname
+            )
+          `)
           .order('created_at', { ascending: false })
 
         if (error) throw error
+        console.log('Notes data:', data)
         setNotes(data)
       } catch (e) {
         setError('Er is een fout opgetreden bij het ophalen van de notities.')
@@ -68,8 +83,8 @@ export default function NotitiesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Titel</TableHead>
                     <TableHead>Beschrijving</TableHead>
+                    <TableHead>Klant</TableHead>
                     <TableHead>Aangemaakt op</TableHead>
                     <TableHead>Laatst gewijzigd</TableHead>
                     <TableHead>Gebruiker</TableHead>
@@ -78,9 +93,19 @@ export default function NotitiesPage() {
                 <TableBody>
                   {notes && notes.length > 0 ? (
                     notes.map((note) => (
-                      <TableRow key={note.id}>
-                        <TableCell className="font-medium">{note.title}</TableCell>
+                      <TableRow 
+                        key={note.id}
+                        className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={() => router.push(`/notities/${note.id}`)}
+                      >
                         <TableCell>{note.description}</TableCell>
+                        <TableCell>
+                          {note.customers ? (
+                            `${note.customers.name} ${note.customers?.surname || ''}`
+                          ) : (
+                            'Onbekend'
+                          )}
+                        </TableCell>
                         <TableCell>
                           {new Date(note.created_at).toLocaleDateString('nl-NL')}{' '}
                           {new Date(note.created_at).toLocaleTimeString('nl-NL', { 
@@ -89,11 +114,17 @@ export default function NotitiesPage() {
                           })}
                         </TableCell>
                         <TableCell>
-                          {new Date(note.updated_at).toLocaleDateString('nl-NL')}{' '}
-                          {new Date(note.updated_at).toLocaleTimeString('nl-NL', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
+                          {note.updated_at ? (
+                            <>
+                              {new Date(note.updated_at).toLocaleDateString('nl-NL')}{' '}
+                              {new Date(note.updated_at).toLocaleTimeString('nl-NL', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </>
+                          ) : (
+                            'Niet gewijzigd'
+                          )}
                         </TableCell>
                         <TableCell>{note.user_email}</TableCell>
                       </TableRow>

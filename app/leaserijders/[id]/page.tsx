@@ -28,6 +28,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { nl } from "date-fns/locale"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NoteDialog } from "@/components/note-dialog"
+import { MaintenanceDialog } from "@/app/components/maintenance-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Creëer de Supabase client buiten de component
 const supabase = createClient()
@@ -52,6 +57,8 @@ export default function LeaserijderDetailPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [notes, setNotes] = useState<any[]>([])
+  const [maintenance, setMaintenance] = useState<any[]>([])
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<CustomerFormData>()
 
@@ -94,6 +101,44 @@ export default function LeaserijderDetailPage() {
 
     fetchCustomer()
   }, [params.id, toast, reset])
+
+  const fetchNotesAndMaintenance = async () => {
+    if (!params.id) return
+
+    try {
+      // Fetch notes
+      const { data: notesData, error: notesError } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('customer_id', params.id)
+        .order('created_at', { ascending: false })
+
+      if (notesError) throw notesError
+      setNotes(notesData)
+
+      // Fetch maintenance
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from('maintenance')
+        .select('*')
+        .eq('customer_id', params.id)
+        .order('maintenance_date', { ascending: false })
+
+      if (maintenanceError) throw maintenanceError
+      setMaintenance(maintenanceData)
+
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      toast({
+        variant: "destructive",
+        title: "Fout",
+        description: "Kon de notities en onderhoud niet ophalen",
+      })
+    }
+  }
+
+  useEffect(() => {
+    fetchNotesAndMaintenance()
+  }, [params.id, toast])
 
   const onSubmit = async (data: CustomerFormData) => {
     try {
@@ -247,6 +292,76 @@ export default function LeaserijderDetailPage() {
               </div>
             </div>
           </form>
+
+          <div className="max-w-4xl mx-auto p-8">
+            <Tabs defaultValue="notes" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="notes">Notities</TabsTrigger>
+                <TabsTrigger value="maintenance">Onderhoud</TabsTrigger>
+              </TabsList>
+              <TabsContent value="notes">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Notities</CardTitle>
+                    <NoteDialog 
+                      customerId={params.id as string}
+                      customerName={watch('name') + ' ' + watch('surname')} 
+                      onNoteSaved={() => fetchNotesAndMaintenance()}
+                      open={false}
+                      onOpenChange={() => {}}
+                    />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {notes.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">Geen notities gevonden</p>
+                    ) : (
+                      notes.map((note) => (
+                        <div key={note.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(note.created_at), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
+                            </p>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{note.description}</p>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="maintenance">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Onderhoud</CardTitle>
+                    <MaintenanceDialog open={false} onOpenChange={() => {}} customerId={params.id as string} onMaintenanceSaved={() => fetchNotesAndMaintenance()} />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {maintenance.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">Geen onderhoud gevonden</p>
+                    ) : (
+                      maintenance.map((item) => (
+                        <div key={item.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(item.maintenance_date), "d MMMM yyyy", { locale: nl })}
+                            </p>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{item.description}</p>
+                          <p className="text-sm mt-2">
+                            <span className="font-medium">Status: </span>
+                            <span className={item.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}>
+                              {item.status === 'completed' ? 'Afgerond' : 'In behandeling'}
+                            </span>
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </main>
     </div>
