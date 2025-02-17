@@ -69,7 +69,8 @@ export default async function AuthButton() {
   );
 }
 const handleSignIn = async () => {
-  await supabase.auth.signInWithOAuth({
+  const supabase = createClient()
+  const { data, error } = await (await supabase).auth.signInWithOAuth({
     provider: 'azure',
     options: {
       redirectTo: `${window.location.origin}/dashboard`
