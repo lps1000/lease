@@ -12,8 +12,10 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+          async get(name: string) {
+            const cookieStore = await cookies()
+            const cookie = await cookieStore.get(name)
+            return cookie?.value
           },
         },
       }

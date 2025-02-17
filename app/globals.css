@@ -57,6 +57,28 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .shadcn-calendar {
+    --date-picker-foreground: hsl(var(--foreground));
+    --date-picker-background: hsl(var(--background));
+    --date-picker-day-hover: hsl(var(--muted));
+    --date-picker-day-focus: hsl(var(--muted));
+    --date-picker-day-selected: hsl(var(--primary));
+    --date-picker-day-selected-hover: hsl(var(--primary));
+    width: 100%;
+    background-color: var(--date-picker-background);
+    border-radius: var(--radius);
+  }
+
+  .shadcn-calendar .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+    background-color: var(--date-picker-day-hover);
+  }
+
+  .shadcn-calendar .rdp-day_selected, 
+  .shadcn-calendar .rdp-day_selected:hover {
+    background-color: var(--date-picker-day-selected);
+    color: hsl(var(--primary-foreground));
+  }
 }
 
 @layer base {
