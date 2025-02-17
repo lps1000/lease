@@ -14,17 +14,6 @@ import { StickyNote } from "lucide-react"
 import { useState } from "react"
 import { createClient } from '@/utils/supabase/client'
 import { toast } from "@/components/hooks/use-toast"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { nl } from 'date-fns/locale'
-import { Label } from "@/components/ui/label"
 
 interface NoteDialogProps {
   customerId: string;
@@ -44,7 +33,10 @@ export function NoteDialog({
   const [note, setNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
-  const [date, setDate] = useState<Date>(new Date())
+  const currentDateTime = new Date().toLocaleString('nl-NL', {
+    dateStyle: 'long',
+    timeStyle: 'short'
+  })
 
   const handleSubmit = async () => {
     if (!note.trim()) {
@@ -62,7 +54,7 @@ export function NoteDialog({
         .insert({
           description: note.trim(),
           customer_id: customerId,
-          created_at: date.toISOString()
+          created_at: new Date().toISOString()
         })
         .select()
 
@@ -97,30 +89,13 @@ export function NoteDialog({
           <DialogTitle>Notitie voor {customerName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label>Datum en tijd</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full pl-3 text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  {format(date, "PPP", { locale: nl })}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate: Date | undefined) => setDate(newDate || new Date())}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Datum en tijd</label>
+            <Input 
+              value={currentDateTime}
+              readOnly
+              className="bg-muted"
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Notitie</label>
