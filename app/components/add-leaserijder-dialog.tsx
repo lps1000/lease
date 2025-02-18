@@ -47,6 +47,7 @@ interface Customer {
   client_since: string
 }
 
+
 export function AddLeaserijderDialog({ 
   open, 
   onOpenChange,

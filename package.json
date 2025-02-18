@@ -6,6 +6,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@hookform/resolvers": "^4.1.0",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.6",
@@ -22,22 +23,25 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "add": "^2.0.6",
     "autoprefixer": "10.4.20",
     "calendar": "^0.1.1",
+    "calender": "^1.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^3.0.0",
+    "form": "^0.2.5",
     "lucide-react": "^0.468.0",
     "next": "latest",
     "next-themes": "^0.4.3",
     "prettier": "^3.3.3",
     "react": "19.0.0",
-    "react-day-picker": "^9.3.0",
+    "react-day-picker": "^9.5.1",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.54.2",
     "shadcn": "^2.3.0",
     "shadcn-ui": "^0.9.4",
-    "sonner": "^1.7.4"
+    "sonner": "^1.7.4",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "22.10.2",
