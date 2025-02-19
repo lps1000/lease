@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar"
 import { Users, Bike, StickyNote, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -20,6 +22,19 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact' });
 
   const totalRiders = count || 0;
+
+  // Haal de laatste 5 leaserijders op
+  const { data: recentRiders, error } = await supabase
+    .from('customers')
+    .select('id, name, surname, client_since')
+    .order('client_since', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Error fetching recent riders:', error);
+  }
+
+  console.log('Recent riders:', recentRiders);
 
   return (
     <div className="flex h-screen bg-background">
@@ -90,25 +105,35 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      "Jan Jansen - Muon Ease",
-                      "Marie Peters - Muon Ease",
-                      "Pieter de Vries - Muon Strive",
-                      "Sophie van Dijk - Muon Ease",
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-accent/50 transition-colors"
-                      >
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">{item}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Toegevoegd {index + 1} dagen geleden
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                    {recentRiders && recentRiders.length > 0 ? (
+                      recentRiders.map((rider) => (
+                        <Link
+                          key={rider.id}
+                          href={`/leaserijders/${rider.id}`}
+                          className="block"
+                        >
+                          <div
+                            className="flex items-center space-x-4 rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                          >
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex-1 space-y-1">
+                              <p className="text-sm font-medium">
+                                {rider.name} {rider.surname}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Toegevoegd {rider.client_since ? new Date(rider.client_since).toLocaleDateString('nl-NL', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                }) : '-'}
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Geen recente leaserijders gevonden</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

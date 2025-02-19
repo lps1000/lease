@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft } from "lucide-react"
-import { createClient } from '@/utils/supabase/client'
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Customers } from '@/app/types/database'
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
@@ -34,9 +34,6 @@ import { NoteDialog } from "@/components/note-dialog"
 import { MaintenanceDialog } from "@/app/components/maintenance-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-// Creëer de Supabase client buiten de component
-const supabase = createClient()
-
 // Update the CustomerFormData interface to match database fields
 interface CustomerFormData {
   name: string
@@ -55,6 +52,7 @@ export default function LeaserijderDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [notes, setNotes] = useState<any[]>([])

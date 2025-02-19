@@ -39,7 +39,6 @@ import { fetchCustomerById, type TeamleaderCustomer } from "@/utils/teamleader-a
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Customers } from '@/app/types/database'
-import { createClient } from '@/utils/supabase/client'
 import { useRouter } from "next/navigation"
 import { MaintenanceDialog } from "@/app/components/maintenance-dialog"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -54,7 +53,7 @@ export default function LeaserijdersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
-  const supabase = createClient()
+  const supabase = createClientComponentClient()
   const [noteFormData, setNoteFormData] = useState<{
     rijderId: number;
     rijderName: string;
@@ -73,7 +72,6 @@ export default function LeaserijdersPage() {
   const getData = async () => {
     try {
       setIsLoading(true);
-      const supabase = createClientComponentClient();
       const { data: customers, error } = await supabase
         .from('customers')
         .select('id, name, surname, email, telephone, zipcode, street, client_since')

@@ -47,6 +47,11 @@ interface Customer {
   client_since: string
 }
 
+interface CustomComponents {
+  IconLeft?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  IconRight?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  // andere componenten...
+}
 
 export function AddLeaserijderDialog({ 
   open, 
